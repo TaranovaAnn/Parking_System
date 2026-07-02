@@ -1,0 +1,105 @@
+<div class="page-header">
+  <div>
+    <h1>Журнал доступа</h1>
+    <p>Все события въезда и выезда · обновляется в реальном времени</p>
+  </div>
+  <span class="count-badge">{{ filteredEvents().length }} записей</span>
+</div>
+
+<mat-card class="filters-card">
+  <form [formGroup]="filters" class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Госномер</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput formControlName="search" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Направление</mat-label>
+      <mat-select formControlName="direction">
+        <mat-option value="All">Все</mat-option>
+        <mat-option value="Entry">Въезд</mat-option>
+        <mat-option value="Exit">Выезд</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Результат</mat-label>
+      <mat-select formControlName="success">
+        <mat-option value="All">Все</mat-option>
+        <mat-option value="Success">Успешно</mat-option>
+        <mat-option value="Failed">Отказ</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Дата</mat-label>
+      <input matInput type="date" formControlName="date" />
+    </mat-form-field>
+
+    <div class="filter-actions">
+      <button mat-stroked-button type="button" (click)="setTodayFilter()">Сегодня</button>
+      <button mat-button type="button" (click)="clearFilters()">Сбросить</button>
+    </div>
+  </form>
+</mat-card>
+
+<mat-card class="table-card">
+  <table mat-table [dataSource]="filteredEvents()" class="log-table">
+    <ng-container matColumnDef="timestamp">
+      <th mat-header-cell *matHeaderCellDef>Дата и время</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.timestamp | date: 'dd.MM.yyyy HH:mm:ss' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="plate">
+      <th mat-header-cell *matHeaderCellDef>Госномер</th>
+      <td mat-cell *matCellDef="let row"><strong>{{ row.vehiclePlate }}</strong></td>
+    </ng-container>
+
+    <ng-container matColumnDef="direction">
+      <th mat-header-cell *matHeaderCellDef>Направление</th>
+      <td mat-cell *matCellDef="let row">
+        <span [class.entry]="row.direction === 'Entry'">
+          {{ directionLabel(row.direction) }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="zone">
+      <th mat-header-cell *matHeaderCellDef>Зона</th>
+      <td mat-cell *matCellDef="let row">{{ getZoneName(row.zoneId) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="operator">
+      <th mat-header-cell *matHeaderCellDef>Оператор</th>
+      <td mat-cell *matCellDef="let row">{{ getOperatorName(row.operatorUserId) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Статус</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.success) {
+          <mat-chip class="chip-success">Успешно</mat-chip>
+        } @else {
+          <mat-chip class="chip-error">Отказ</mat-chip>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="message">
+      <th mat-header-cell *matHeaderCellDef>Примечание</th>
+      <td mat-cell *matCellDef="let row">{{ row.message ?? '—' }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty" [attr.colspan]="displayedColumns.length">
+        События не найдены
+      </td>
+    </tr>
+  </table>
+</mat-card>

@@ -1,0 +1,116 @@
+<div class="page-header">
+  <div>
+    <h1>Въезд / Выезд</h1>
+    <p>Регистрация въезда и выезда — оператор: {{ user()?.fullName }}</p>
+  </div>
+
+  <div class="live-stats">
+    <span><strong>{{ vehicleCount() }}</strong> на парковке</span>
+    <span><strong>{{ freeSpots() }}</strong> свободно</span>
+    <span>из {{ totalCapacity() }}</span>
+  </div>
+</div>
+
+<div class="layout">
+  <mat-card class="control-card">
+    <h2>Считыватель</h2>
+
+    <form [formGroup]="form" class="plate-form" (ngSubmit)="checkPass()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Госномер</mat-label>
+        <mat-icon matPrefix>directions_car</mat-icon>
+        <input
+          matInput
+          formControlName="vehiclePlate"
+          autocomplete="off"
+          [placeholder]="plateHint"
+        />
+        @if (form.controls.vehiclePlate.touched && form.controls.vehiclePlate.hasError('required')) {
+          <mat-error>Введите госномер</mat-error>
+        }
+        @if (form.controls.vehiclePlate.touched && form.controls.vehiclePlate.hasError('plateFormat')) {
+          <mat-error>{{ plateFormatError }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="actions-row">
+        <button mat-stroked-button type="submit" [disabled]="processing()">
+          <mat-icon>search</mat-icon>
+          Проверить
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="registerEntry()"
+          [disabled]="processing()"
+        >
+          <mat-icon>login</mat-icon>
+          Въезд
+        </button>
+        <button
+          mat-flat-button
+          color="accent"
+          type="button"
+          (click)="registerExit()"
+          [disabled]="processing()"
+        >
+          <mat-icon>logout</mat-icon>
+          Выезд
+        </button>
+      </div>
+    </form>
+
+    @if (lastMessage(); as msg) {
+      <div class="result-banner" [class.success]="msg.success" [class.error]="!msg.success">
+        <mat-icon>{{ msg.success ? 'check_circle' : 'error' }}</mat-icon>
+        {{ msg.text }}
+      </div>
+    }
+
+    @if (validation(); as check) {
+      <div class="pass-check" [class.error-state]="!!check.error">
+        <h3>Результат проверки</h3>
+
+        @if (!check.found) {
+          <p class="check-error">Пропуск не найден для указанного номера</p>
+        } @else {
+          @if (check.pass; as pass) {
+            <div class="pass-info">
+              <div class="pass-row">
+                <span>Номер</span>
+                <strong>{{ pass.vehiclePlate }}</strong>
+              </div>
+              <div class="pass-row">
+                <span>Тип</span>
+                <app-pass-type-chip [type]="pass.type" />
+              </div>
+              <div class="pass-row">
+                <span>Статус</span>
+                <app-pass-status-chip [status]="pass.status" />
+              </div>
+              <div class="pass-row">
+                <span>Зона</span>
+                <span>{{ getZoneName(pass.zoneId) }}</span>
+              </div>
+              <div class="pass-row">
+                <span>Действует до</span>
+                <span>{{ pass.validTo | date: 'dd.MM.yyyy HH:mm' }}</span>
+              </div>
+              <div class="pass-row">
+                <span>На территории</span>
+                <span [class.inside]="isInside()">{{ isInside() ? 'Да' : 'Нет' }}</span>
+              </div>
+            </div>
+
+            @if (check.error) {
+              <p class="check-error">{{ check.error }}</p>
+            } @else {
+              <p class="check-ok">Пропуск действителен — можно оформить въезд</p>
+            }
+          }
+        }
+      </div>
+    }
+  </mat-card>
+</div>

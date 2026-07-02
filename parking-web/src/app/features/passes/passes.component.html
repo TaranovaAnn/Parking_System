@@ -1,0 +1,222 @@
+<div class="page-header">
+  <div>
+    <h1>Пропуска</h1>
+    <p>
+      @if (role() === 'Employee') {
+        Ваши пропуска и гостевые заявки
+      } @else if (role() === 'Guard') {
+        Просмотр пропусков и согласование гостевых заявок
+      } @else {
+        Управление пропусками парковки
+      }
+    </p>
+  </div>
+
+  @if (canCreateGuest() || canCreatePermanent() || canSubmitGuestRequest()) {
+    <div class="header-actions">
+      @if (canCreatePermanent()) {
+        <button mat-stroked-button color="primary" (click)="openPermanentDialog()">
+          <mat-icon>badge</mat-icon>
+          Постоянный пропуск
+        </button>
+      }
+      @if (canCreateGuest()) {
+        <button mat-flat-button color="primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          Гостевой пропуск
+        </button>
+      }
+      @if (canSubmitGuestRequest()) {
+        <button mat-flat-button color="primary" (click)="openGuestRequestDialog()">
+          <mat-icon>assignment</mat-icon>
+          Гостевая заявка
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<mat-card class="filters-card">
+  <form [formGroup]="filters" class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Тип</mat-label>
+      <mat-select formControlName="type">
+        @for (type of passTypes; track type) {
+          <mat-option [value]="type">{{ typeLabel(type) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Статус</mat-label>
+      <mat-select formControlName="status">
+        @for (status of passStatuses; track status) {
+          <mat-option [value]="status">{{ statusLabel(status) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Поиск по номеру</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput formControlName="search" />
+    </mat-form-field>
+  </form>
+</mat-card>
+
+@if (canViewRequests()) {
+  <mat-card class="table-card requests-card">
+    <div class="section-title">
+      <h2>{{ role() === 'Employee' ? 'Мои гостевые заявки' : 'Заявки на гостевые пропуска' }}</h2>
+    </div>
+
+    <table mat-table [dataSource]="guestRequests()" class="passes-table">
+      <ng-container matColumnDef="guestFullName">
+        <th mat-header-cell *matHeaderCellDef>Гость</th>
+        <td mat-cell *matCellDef="let row">{{ row.guestFullName || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="plate">
+        <th mat-header-cell *matHeaderCellDef>Госномер</th>
+        <td mat-cell *matCellDef="let row">
+          <strong>{{ row.vehiclePlate }}</strong>
+          @if (row.notes) {
+            <div class="note" [matTooltip]="row.notes">{{ row.notes }}</div>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="zone">
+        <th mat-header-cell *matHeaderCellDef>Зона</th>
+        <td mat-cell *matCellDef="let row">{{ getZoneName(row.zoneId) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="duration">
+        <th mat-header-cell *matHeaderCellDef>Срок</th>
+        <td mat-cell *matCellDef="let row">{{ row.durationHours }} ч</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Статус</th>
+        <td mat-cell *matCellDef="let row">{{ requestStatusLabel(row.status) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Создана</th>
+        <td mat-cell *matCellDef="let row">{{ row.createdAt | date: 'dd.MM.yyyy HH:mm' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="requestedBy">
+        <th mat-header-cell *matHeaderCellDef>Инициатор</th>
+        <td mat-cell *matCellDef="let row">{{ getRequesterName(row.requestedByUserId) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="requestActions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.status === 'Pending') {
+            <div class="request-actions">
+              <button mat-stroked-button color="primary" (click)="approveRequest(row)">Одобрить</button>
+              <button mat-stroked-button color="warn" (click)="rejectRequest(row)">Отклонить</button>
+            </div>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="guestRequestColumns()"></tr>
+      <tr mat-row *matRowDef="let row; columns: guestRequestColumns()"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell empty" [attr.colspan]="guestRequestColumns().length">
+          Заявки не найдены
+        </td>
+      </tr>
+    </table>
+  </mat-card>
+}
+
+<mat-card class="table-card">
+  <table mat-table [dataSource]="filteredPasses()" class="passes-table">
+    <ng-container matColumnDef="plate">
+      <th mat-header-cell *matHeaderCellDef>Госномер</th>
+      <td mat-cell *matCellDef="let row">
+        <strong>{{ row.vehiclePlate }}</strong>
+        @if (row.notes) {
+          <div class="note" [matTooltip]="row.notes">{{ row.notes }}</div>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>Тип</th>
+      <td mat-cell *matCellDef="let row">
+        <app-pass-type-chip [type]="row.type" />
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Статус</th>
+      <td mat-cell *matCellDef="let row">
+        <app-pass-status-chip [status]="row.status" />
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="zone">
+      <th mat-header-cell *matHeaderCellDef>Зона</th>
+      <td mat-cell *matCellDef="let row">{{ getZoneName(row.zoneId) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="period">
+      <th mat-header-cell *matHeaderCellDef>Срок действия</th>
+      <td mat-cell *matCellDef="let row">
+        <div class="period">
+          <span>{{ row.validFrom | date: 'dd.MM.yyyy HH:mm' }}</span>
+          <span class="period-sep">→</span>
+          <span>{{ row.validTo | date: 'dd.MM.yyyy HH:mm' }}</span>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="countdown">
+      <th mat-header-cell *matHeaderCellDef>Осталось</th>
+      <td mat-cell *matCellDef="let row">
+        <app-pass-countdown
+          [validTo]="row.validTo"
+          [status]="row.status"
+          [type]="row.type"
+          (expired)="onPassExpired(row.id)"
+        />
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="owner">
+      <th mat-header-cell *matHeaderCellDef>Владелец</th>
+      <td mat-cell *matCellDef="let row">{{ getOwnerName(row.ownerUserId) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.status !== 'Blocked') {
+          <button
+            mat-icon-button
+            color="warn"
+            matTooltip="Заблокировать"
+            (click)="blockPass(row)"
+          >
+            <mat-icon>block</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty" [attr.colspan]="displayedColumns().length">
+        Пропуска не найдены
+      </td>
+    </tr>
+  </table>
+</mat-card>

@@ -1,0 +1,73 @@
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.count-badge {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.filters-card {
+  padding: 16px 16px 0;
+  margin-bottom: 16px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+
+  mat-form-field {
+    min-width: 160px;
+  }
+
+  .search-field {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.log-table {
+  width: 100%;
+}
+
+.entry {
+  color: #0284c7;
+  font-weight: 500;
+}
+
+.chip-success {
+  --mdc-chip-label-text-color: #047857;
+  background: #ecfdf5 !important;
+}
+
+.chip-error {
+  --mdc-chip-label-text-color: #b91c1c;
+  background: #fef2f2 !important;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px !important;
+  color: #94a3b8;
+}

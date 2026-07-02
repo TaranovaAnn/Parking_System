@@ -1,0 +1,55 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  padding: 20px;
+
+  .value {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .label {
+    color: #64748b;
+    font-size: 14px;
+  }
+}
+
+.filters-card {
+  padding: 16px 16px 0;
+  margin-bottom: 16px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.export-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.reports-table {
+  width: 100%;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px !important;
+  color: #94a3b8;
+}

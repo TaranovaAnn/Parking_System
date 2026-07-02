@@ -1,0 +1,44 @@
+<mat-sidenav-container class="shell-container">
+  <mat-sidenav mode="side" opened class="shell-sidenav">
+    <div class="brand">
+      <mat-icon>local_parking</mat-icon>
+      <div>
+        <strong>Parking Control</strong>
+        <small>Контроль доступа</small>
+      </div>
+    </div>
+
+    <mat-nav-list>
+      @for (item of visibleNavItems(); track item.route) {
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="active-link"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="top-toolbar">
+      <span class="toolbar-title">Система контроля доступа на парковку</span>
+      <span class="spacer"></span>
+      @if (user(); as currentUser) {
+        <span class="user-info">
+          {{ currentUser.fullName }}
+          <small>{{ roleLabel() }}</small>
+        </span>
+        <button mat-icon-button (click)="logout()" aria-label="Выйти">
+          <mat-icon>logout</mat-icon>
+        </button>
+      }
+    </mat-toolbar>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

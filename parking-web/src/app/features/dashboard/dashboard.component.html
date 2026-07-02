@@ -1,0 +1,128 @@
+<div class="page-header">
+  <div>
+    <h1>Дашборд</h1>
+    <p>Добро пожаловать, {{ user()?.fullName }}</p>
+  </div>
+
+  <div
+    class="live-badge"
+    [class.connected]="connectionState() === 'connected'"
+    [class.offline]="connectionState() === 'offline'"
+    matTooltip="Обновления в реальном времени через SignalR"
+  >
+    <span class="live-dot"></span>
+    {{ connectionLabel() }}
+  </div>
+</div>
+
+<div class="stats-grid">
+  <mat-card class="stat-card highlight">
+    <mat-icon>directions_car</mat-icon>
+    <div>
+      <span class="value live-value">{{ vehicleCount() }}</span>
+      <span class="label">Машин на парковке</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="stat-card">
+    <mat-icon>event_available</mat-icon>
+    <div>
+      <span class="value live-value">{{ freeSpots() }}</span>
+      <span class="label">Свободных мест</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="stat-card">
+    <mat-icon>history</mat-icon>
+    <div>
+      <span class="value live-value">{{ todayEventCount() }}</span>
+      <span class="label">Событий сегодня</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="stat-card">
+    <mat-icon>local_parking</mat-icon>
+    <div>
+      <span class="value">{{ occupancyPercent() }}%</span>
+      <span class="label">Заполненность</span>
+    </div>
+  </mat-card>
+</div>
+
+<mat-card class="occupancy-card">
+  <h2>Загрузка по зонам</h2>
+  <div class="zones-list">
+    @for (zone of zoneOccupancy(); track zone.id) {
+      <div class="zone-row">
+        <div class="zone-info">
+          <strong>{{ zone.name }}</strong>
+          <span>{{ zone.occupied }} / {{ zone.capacity }} мест</span>
+        </div>
+        <mat-progress-bar mode="determinate" [value]="zone.percent"></mat-progress-bar>
+      </div>
+    }
+  </div>
+</mat-card>
+
+<mat-card class="events-card">
+  <div class="events-header">
+    <h2>События за сегодня</h2>
+    <small>Только текущие сутки · обновляется автоматически</small>
+  </div>
+
+  <table mat-table [dataSource]="recentEvents()" class="events-table">
+    <ng-container matColumnDef="time">
+      <th mat-header-cell *matHeaderCellDef>Время</th>
+      <td mat-cell *matCellDef="let row">{{ row.timestamp | date: 'HH:mm:ss' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="plate">
+      <th mat-header-cell *matHeaderCellDef>Госномер</th>
+      <td mat-cell *matCellDef="let row">
+        <strong>{{ row.vehiclePlate }}</strong>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="direction">
+      <th mat-header-cell *matHeaderCellDef>Направление</th>
+      <td mat-cell *matCellDef="let row">
+        <span class="direction" [class.entry]="row.direction === 'Entry'">
+          <mat-icon>{{ directionIcon(row.direction) }}</mat-icon>
+          {{ directionLabel(row.direction) }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="zone">
+      <th mat-header-cell *matHeaderCellDef>Зона</th>
+      <td mat-cell *matCellDef="let row">{{ getZoneName(row.zoneId) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="operator">
+      <th mat-header-cell *matHeaderCellDef>Оператор</th>
+      <td mat-cell *matCellDef="let row">{{ getOperatorName(row.operatorUserId) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Статус</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.success) {
+          <mat-chip class="chip-success">Успешно</mat-chip>
+        } @else {
+          <mat-chip class="chip-error" [matTooltip]="row.message ?? ''">
+            Отказ
+          </mat-chip>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell empty" [attr.colspan]="displayedColumns.length">
+        Сегодня событий пока нет
+      </td>
+    </tr>
+  </table>
+</mat-card>

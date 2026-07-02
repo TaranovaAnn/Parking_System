@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: parking-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: parking_system
+      POSTGRES_USER: parking_user
+      POSTGRES_PASSWORD: parking_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - parking_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parking_user -d parking_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./ParkingSystem.Api
+      dockerfile: Dockerfile
+    container_name: parking-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=parking_system;Username=parking_user;Password=parking_password
+    ports:
+      - "5049:8080"
+    volumes:
+      - api_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./parking-web
+      dockerfile: Dockerfile
+    container_name: parking-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  parking_postgres_data:
+  api_uploads:
